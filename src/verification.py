@@ -1,0 +1,97 @@
+"""Step 5: confirm a submission actually landed, in the browser and in the intake system.
+
+PASS requires all of: the confirmation panel is shown, the intake ID has the expected format, and
+the intake system holds a record under that intake ID with the values that were submitted.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import Page, expect
+
+from .form_filler import form_values
+from .models import IntakeExtraction
+
+log = logging.getLogger(__name__)
+
+INTAKE_ID_RE = re.compile(r"^TAX-\d{8}-[0-9A-F]{4}$")
+CONFIRMATION_TIMEOUT_MS = 10_000
+
+
+@dataclass(frozen=True)
+class VerificationResult:
+    passed: bool
+    intake_id: str | None
+    detail: str
+    screenshot: Path | None
+
+
+def verify_submission(
+    page: Page,
+    record: IntakeExtraction,
+    lookup_submission: Callable[[str], dict[str, Any] | None],
+    screenshot_dir: Path,
+    label: str,
+) -> VerificationResult:
+    intake_id: str | None = None
+    try:
+        confirmation = page.locator("#confirmation")
+        expect(confirmation).to_be_visible(timeout=CONFIRMATION_TIMEOUT_MS)
+        expect(confirmation).to_contain_text("Intake received")
+
+        intake_id = page.locator("#intake-id").inner_text().strip()
+        if not INTAKE_ID_RE.match(intake_id):
+            raise AssertionError(f"intake ID {intake_id!r} does not match the expected format")
+
+        stored = lookup_submission(intake_id)
+        if stored is None:
+            raise AssertionError(f"intake system has no record of intake {intake_id}")
+        mismatched = [name for name, value in form_values(record).items() if not _same(stored.get(name), value)]
+        if mismatched:
+            raise AssertionError(f"intake system recorded different values for: {', '.join(mismatched)}")
+
+        passed, detail = True, f"Confirmation shown; intake {intake_id} recorded with matching details"
+    except (AssertionError, PlaywrightError) as exc:
+        passed, detail = False, _failure_detail(page, exc)
+
+    screenshot = _take_screenshot(page, screenshot_dir, intake_id if passed and intake_id else f"{label}_FAIL")
+    log.log(logging.INFO if passed else logging.ERROR, "Verification %s: %s", "PASS" if passed else "FAIL", detail)
+    return VerificationResult(
+        passed=passed, intake_id=intake_id if passed else None, detail=detail, screenshot=screenshot
+    )
+
+
+def _same(stored: Any, submitted: str | list[str]) -> bool:
+    """Checkbox groups are compared as sets: the order the browser sends them in does not matter."""
+    if isinstance(submitted, list):
+        return isinstance(stored, list) and sorted(stored) == sorted(submitted)
+    return stored == submitted
+
+
+def _failure_detail(page: Page, exc: Exception) -> str:
+    detail = (str(exc).strip().splitlines() or [type(exc).__name__])[0]
+    try:
+        error_box = page.locator("#form-error")
+        if error_box.is_visible():
+            detail += f" (form error: {error_box.inner_text().strip()})"
+    except PlaywrightError:
+        pass
+    return detail
+
+
+def _take_screenshot(page: Page, folder: Path, name: str) -> Path | None:
+    path = folder / f"{name}.png"
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(path), full_page=True)
+        return path
+    except PlaywrightError as exc:
+        log.warning("Could not save screenshot %s: %s", path.name, exc)
+        return None

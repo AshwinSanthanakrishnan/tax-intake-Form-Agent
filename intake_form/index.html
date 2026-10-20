@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Intake · Example Tax &amp; Accounting Group (Demo)</title>
+  <style>
+    :root {
+      --bg: #f3f6f4;
+      --card: #ffffff;
+      --ink: #1b2430;
+      --muted: #5c6777;
+      --line: #d8e0db;
+      --accent: #14532d;
+      --accent-hover: #0f3f22;
+      --focus: #2f8f5b;
+      --ok: #1d7a4e;
+      --ok-bg: #e7f4ed;
+      --err: #a3262c;
+      --err-bg: #fcecec;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .topbar { background: var(--accent); color: #fff; }
+    .topbar .inner {
+      max-width: 860px; margin: 0 auto; padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .brand { font-weight: 600; letter-spacing: .2px; }
+    .brand small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
+    .badge {
+      font-size: 12px; white-space: nowrap; padding: 4px 10px; border-radius: 999px;
+      background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .35);
+    }
+    main { max-width: 860px; margin: 28px auto; padding: 0 24px; }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 28px; box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+    }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .lede { color: var(--muted); margin: 0 0 24px; }
+    fieldset { border: 0; padding: 0; margin: 0 0 22px; min-width: 0; }
+    legend {
+      font-size: 12px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px; padding: 0;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    /* The asterisk is CSS-generated so each label's text is exactly the field name. */
+    label.required::after { content: "*"; color: var(--err); margin-left: 2px; }
+    .req { color: var(--err); }
+    input, select, textarea {
+      width: 100%; padding: 9px 11px; font: inherit; color: inherit; background: #fff;
+      border: 1px solid var(--line); border-radius: 6px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus);
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    .field-hint { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+    .checks { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0; }
+    .checks legend {
+      font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink);
+      margin: 0; padding: 0 4px;
+    }
+    .checks .options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-top: 6px; }
+    .checks label { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; }
+    .checks input { width: auto; margin: 0; accent-color: var(--accent); }
+    .notice {
+      margin: 0 0 22px; padding: 10px 14px; border-radius: 6px; font-size: 13.5px;
+      background: #fff8e6; border: 1px solid #f0dca8; color: #6b4e00;
+    }
+    .actions {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      border-top: 1px solid var(--line); padding-top: 20px;
+    }
+    .hint { margin: 0; color: var(--muted); font-size: 13px; }
+    button {
+      font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+      border: 0; border-radius: 6px; padding: 10px 20px; cursor: pointer;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: .6; cursor: progress; }
+    .alert {
+      margin-bottom: 20px; padding: 10px 14px; border-radius: 6px;
+      color: var(--err); background: var(--err-bg); border: 1px solid #f1c3c5;
+    }
+    .confirm { border-left: 4px solid var(--ok); }
+    .confirm h2 { margin: 0 0 6px; font-size: 20px; color: var(--ok); }
+    .intake-id {
+      display: inline-block; padding: 6px 10px; border-radius: 6px; letter-spacing: .5px;
+      font: 600 18px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--ok); background: var(--ok-bg);
+    }
+    dl.summary { display: grid; grid-template-columns: max-content 1fr; gap: 6px 20px; margin: 20px 0 24px; }
+    dl.summary dt { color: var(--muted); }
+    dl.summary dd { margin: 0; }
+    footer { max-width: 860px; margin: 0 auto 32px; padding: 0 24px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 640px) {
+      .grid, .checks .options { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .topbar .inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <div class="brand">Example Tax &amp; Accounting Group<small>Client Intake System</small></div>
+      <span class="badge">Demo environment · fictional data only</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="intake-card">
+      <h1>New tax client intake</h1>
+      <p class="lede">Record a prospective client's details. Every intake is reviewed by a tax preparer before the client is contacted.</p>
+
+      <div id="form-error" class="alert" role="alert" hidden></div>
+      <p class="notice">Do not enter Social Security numbers, ITINs, or bank details on this form. They are collected separately through the secure client portal.</p>
+
+      <form id="intake-form" autocomplete="off">
+        <fieldset>
+          <legend>Taxpayer</legend>
+          <div class="grid">
+            <div class="full">
+              <label class="required" for="full_name">Full legal name</label>
+              <input id="full_name" name="full_name" type="text" required>
+            </div>
+            <div>
+              <label class="required" for="email">Email address</label>
+              <input id="email" name="email" type="email" required>
+            </div>
+            <div>
+              <label class="required" for="phone">Phone number</label>
+              <input id="phone" name="phone" type="tel" required>
+            </div>
+            <div>
+              <label class="required" for="date_of_birth">Date of birth</label>
+              <input id="date_of_birth" name="date_of_birth" type="date" min="1900-01-01" required>
+            </div>
+            <div>
+              <label for="marital_status">Marital status</label>
+              <select id="marital_status" name="marital_status">
+                <option value="">Not stated</option>
+                <option value="single">Single</option>
+                <option value="married">Married</option>
+                <option value="divorced">Divorced</option>
+                <option value="widowed">Widowed</option>
+                <option value="separated">Separated</option>
+              </select>
+            </div>
+            <div>
+              <label for="preferred_contact_method">Preferred contact method</label>
+              <select id="preferred_contact_method" name="preferred_contact_method">
+                <option value="">Not stated</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Home address</legend>
+          <div class="grid">
+            <div class="full">
+              <label class="required" for="street_address">Street address</label>
+              <input id="street_address" name="street_address" type="text" required placeholder="e.g. 1418 Cedar Ridge Dr, Apt 2B">
+            </div>
+            <div>
+              <label class="required" for="city">City</label>
+              <input id="city" name="city" type="text" required>
+            </div>
+            <div class="grid">
+              <div>
+                <label class="required" for="state">State</label>
+                <select id="state" name="state" required data-states>
+                  <option value="">Select…</option>
+                </select>
+              </div>
+              <div>
+                <label class="required" for="zip_code">ZIP code</label>
+                <input id="zip_code" name="zip_code" type="text" inputmode="numeric" required pattern="\d{5}(-\d{4})?">
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Photo ID</legend>
+          <div class="grid">
+            <div>
+              <label class="required" for="drivers_license_number">Driver's license / state ID number</label>
+              <input id="drivers_license_number" name="drivers_license_number" type="text" required>
+            </div>
+            <div>
+              <label class="required" for="drivers_license_state">Issuing state</label>
+              <select id="drivers_license_state" name="drivers_license_state" required data-states>
+                <option value="">Select…</option>
+              </select>
+            </div>
+            <div>
+              <label for="drivers_license_issued_on">License issue date</label>
+              <input id="drivers_license_issued_on" name="drivers_license_issued_on" type="date" min="1900-01-01">
+            </div>
+            <div>
+              <label class="required" for="drivers_license_expires_on">License expiration date</label>
+              <input id="drivers_license_expires_on" name="drivers_license_expires_on" type="date" min="1900-01-01" required>
+            </div>
+          </div>
+          <p class="field-hint">Many states ask for this to verify identity on an e-filed return.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tax situation</legend>
+          <div class="grid">
+            <div>
+              <label class="required" for="tax_year">Tax year</label>
+              <input id="tax_year" name="tax_year" type="number" min="1990" step="1" required>
+            </div>
+            <div>
+              <label for="filing_status">Filing status</label>
+              <select id="filing_status" name="filing_status">
+                <option value="">Not stated / let preparer decide</option>
+                <option value="single">Single</option>
+                <option value="married_filing_jointly">Married filing jointly</option>
+                <option value="married_filing_separately">Married filing separately</option>
+                <option value="head_of_household">Head of household</option>
+                <option value="qualifying_surviving_spouse">Qualifying surviving spouse</option>
+              </select>
+            </div>
+            <div>
+              <label for="number_of_dependents">Number of dependents</label>
+              <input id="number_of_dependents" name="number_of_dependents" type="number" min="0" max="20" step="1">
+            </div>
+            <div>
+              <label for="occupation">Occupation</label>
+              <input id="occupation" name="occupation" type="text">
+            </div>
+            <div class="full">
+              <label for="employer">Employer</label>
+              <input id="employer" name="employer" type="text">
+            </div>
+            <fieldset class="checks full">
+              <legend>Income sources</legend>
+              <div class="options">
+                <label><input type="checkbox" name="income_sources" value="w2_wages"> W-2 wages</label>
+                <label><input type="checkbox" name="income_sources" value="self_employment"> Self-employment / 1099</label>
+                <label><input type="checkbox" name="income_sources" value="interest_dividends"> Interest and dividends</label>
+                <label><input type="checkbox" name="income_sources" value="capital_gains"> Stock, crypto or property sales</label>
+                <label><input type="checkbox" name="income_sources" value="rental"> Rental property income</label>
+                <label><input type="checkbox" name="income_sources" value="retirement"> Retirement, pension or Social Security</label>
+                <label><input type="checkbox" name="income_sources" value="unemployment"> Unemployment benefits</label>
+                <label><input type="checkbox" name="income_sources" value="other_income"> Other income</label>
+              </div>
+            </fieldset>
+            <fieldset class="checks full">
+              <legend>Deductions and credits</legend>
+              <div class="options">
+                <label><input type="checkbox" name="deductions" value="mortgage_interest"> Mortgage interest / property tax</label>
+                <label><input type="checkbox" name="deductions" value="charitable"> Charitable donations</label>
+                <label><input type="checkbox" name="deductions" value="education"> Tuition or education expenses</label>
+                <label><input type="checkbox" name="deductions" value="student_loan_interest"> Student loan interest</label>
+                <label><input type="checkbox" name="deductions" value="childcare"> Child or dependent care</label>
+                <label><input type="checkbox" name="deductions" value="medical"> Medical expenses</label>
+                <label><input type="checkbox" name="deductions" value="retirement_contributions"> IRA or HSA contributions</label>
+                <label><input type="checkbox" name="deductions" value="marketplace_insurance"> Marketplace health insurance (1095-A)</label>
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Request</legend>
+          <div class="grid">
+            <div>
+              <label class="required" for="urgency">Urgency</label>
+              <select id="urgency" name="urgency" required>
+                <option value="">Select urgency…</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div>
+              <label for="deadline_date">Deadline</label>
+              <input id="deadline_date" name="deadline_date" type="date" min="1900-01-01">
+            </div>
+            <div>
+              <label for="irs_notice_received">IRS or state notice received</label>
+              <select id="irs_notice_received" name="irs_notice_received">
+                <option value="">Not stated</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div>
+              <label for="consultation_requested">Consultation requested</label>
+              <select id="consultation_requested" name="consultation_requested">
+                <option value="">Not stated</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div class="full">
+              <label for="request_summary">Request summary</label>
+              <textarea id="request_summary" name="request_summary" rows="2"></textarea>
+            </div>
+            <div class="full">
+              <label for="notes">Notes</label>
+              <textarea id="notes" name="notes"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <p class="hint">Fields marked <span class="req">*</span> are required.</p>
+          <button type="submit" id="submit-btn">Submit intake</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card confirm" id="confirmation" role="status" aria-live="polite" tabindex="-1" hidden>
+      <h2>Intake received</h2>
+      <p>The intake has been recorded and queued for preparer review.</p>
+      <p>Intake ID: <span class="intake-id" id="intake-id"></span></p>
+      <dl class="summary" id="summary"></dl>
+      <button type="button" id="new-intake">Start another intake</button>
+    </section>
+  </main>
+
+  <footer>Local demo. Submissions stay on this machine and are discarded when the demo stops.</footer>
+
+  <script>
+    const STATES = [
+      ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"], ["CA", "California"],
+      ["CO", "Colorado"], ["CT", "Connecticut"], ["DE", "Delaware"], ["DC", "District of Columbia"],
+      ["FL", "Florida"], ["GA", "Georgia"], ["HI", "Hawaii"], ["ID", "Idaho"], ["IL", "Illinois"],
+      ["IN", "Indiana"], ["IA", "Iowa"], ["KS", "Kansas"], ["KY", "Kentucky"], ["LA", "Louisiana"],
+      ["ME", "Maine"], ["MD", "Maryland"], ["MA", "Massachusetts"], ["MI", "Michigan"], ["MN", "Minnesota"],
+      ["MS", "Mississippi"], ["MO", "Missouri"], ["MT", "Montana"], ["NE", "Nebraska"], ["NV", "Nevada"],
+      ["NH", "New Hampshire"], ["NJ", "New Jersey"], ["NM", "New Mexico"], ["NY", "New York"],
+      ["NC", "North Carolina"], ["ND", "North Dakota"], ["OH", "Ohio"], ["OK", "Oklahoma"], ["OR", "Oregon"],
+      ["PA", "Pennsylvania"], ["RI", "Rhode Island"], ["SC", "South Carolina"], ["SD", "South Dakota"],
+      ["TN", "Tennessee"], ["TX", "Texas"], ["UT", "Utah"], ["VT", "Vermont"], ["VA", "Virginia"],
+      ["WA", "Washington"], ["WV", "West Virginia"], ["WI", "Wisconsin"], ["WY", "Wyoming"],
+    ];
+    const MULTI_VALUE = ["income_sources", "deductions"];
+
+    const form = document.getElementById("intake-form");
+    const intakeCard = document.getElementById("intake-card");
+    const confirmation = document.getElementById("confirmation");
+    const errorBox = document.getElementById("form-error");
+    const submitBtn = document.getElementById("submit-btn");
+
+    for (const select of document.querySelectorAll("select[data-states]")) {
+      for (const [code, name] of STATES) select.add(new Option(name, code));
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("date_of_birth").max = today;
+    document.getElementById("drivers_license_issued_on").max = today;
+    document.getElementById("tax_year").max = new Date().getFullYear();
+
+    function collect() {
+      const data = Object.fromEntries(MULTI_VALUE.map((name) => [name, []]));
+      for (const [name, value] of new FormData(form).entries()) {
+        if (MULTI_VALUE.includes(name)) data[name].push(value);
+        else data[name] = value;
+      }
+      return data;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.hidden = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting…";
+      const data = collect();
+      try {
+        const response = await fetch("/api/intake", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || `Submission failed (HTTP ${response.status})`);
+        showConfirmation(body.intake_id, data);
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.hidden = false;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit intake";
+      }
+    });
+
+    function masked(id) {
+      const compact = id.replace(/[\s-]/g, "");
+      return "•".repeat(Math.max(compact.length - 4, 0)) + compact.slice(-4);
+    }
+
+    function checkedLabels(name) {
+      return [...form.querySelectorAll(`input[name="${name}"]:checked`)]
+        .map((box) => box.parentElement.textContent.trim()).join(", ");
+    }
+
+    function showConfirmation(intakeId, data) {
+      document.getElementById("intake-id").textContent = intakeId;
+      const filing = document.getElementById("filing_status");
+      const rows = [
+        ["Client", data.full_name],
+        ["Email", data.email],
+        ["Phone", data.phone],
+        ["Address", `${data.street_address}, ${data.city}, ${data.state} ${data.zip_code}`],
+        ["Photo ID", `${data.drivers_license_state} license ${masked(data.drivers_license_number)}, expires ${data.drivers_license_expires_on}`],
+        ["Tax year", data.tax_year],
+        ["Filing status", data.filing_status ? filing.options[filing.selectedIndex].text : ""],
+        ["Income", checkedLabels("income_sources")],
+        ["Urgency", data.urgency.charAt(0).toUpperCase() + data.urgency.slice(1)],
+      ].filter(([, value]) => value);
+      document.getElementById("summary").replaceChildren(
+        ...rows.flatMap(([term, value]) => {
+          const dt = document.createElement("dt");
+          const dd = document.createElement("dd");
+          dt.textContent = term;
+          dd.textContent = value;
+          return [dt, dd];
+        })
+      );
+      intakeCard.hidden = true;
+      confirmation.hidden = false;
+      confirmation.focus();
+    }
+
+    document.getElementById("new-intake").addEventListener("click", () => {
+      form.reset();
+      confirmation.hidden = true;
+      intakeCard.hidden = false;
+    });
+  </script>
+</body>
+</html>
